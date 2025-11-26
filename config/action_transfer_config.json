@@ -1,0 +1,69 @@
+{
+    "endpoint_path": "/wan/action_transfer",
+    "workflow_file": "workflow/action_transfer_api.json",
+    "description": "Transfer action from a video with a image to generate a new video with text prompt",
+    "form_params": ["prompt", "negative_prompt", "filename_prefix", "image_width", "image_height", "cfg_scale", "steps", "seed", "motion_frame", "frame_rate", "num_frames"],
+    "file_configs": [
+        {
+            "param_name": "image",
+            "file_type": "image",
+            "upload_to_comfy": true,
+            "copy_to_input": true,
+            "required": true
+        },
+        {
+            "param_name": "action",
+            "file_type": "video",
+            "upload_to_comfy": false,
+            "copy_to_input": true,
+            "required": true
+        }
+    ],
+    "node_updates": [
+        {
+            "node_id": "165",
+            "input_key": "image",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "178",
+            "input_key": "file",
+            "map_key": "action",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "188",
+            "input_key": "text",
+            "map_key": "prompt",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "202",
+            "input_key": "value",
+            "map_key": "num_frames",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "201",
+            "input_key": "frame_rate",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "201",
+            "input_key": "filename_prefix",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "204",
+            "input_key": "value",
+            "map_key": "width",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "203",
+            "input_key": "value",
+            "map_key": "height",
+            "value_source": "form_param"
+        }
+    ]
+}

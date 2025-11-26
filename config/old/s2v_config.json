@@ -1,0 +1,79 @@
+{
+    "endpoint_path": "/wan/s2v",
+    "workflow_file": "workflow/s2v_api.json",
+    "description": "Convert sound and image to video with text prompt",
+    "form_params": ["prompt", "negative_prompt", "filename_prefix", "image_width", "image_height", "cfg_scale", "steps", "seed", "motion_frame", "frame_rate", "num_frames"],
+    "file_configs": [
+        {
+            "param_name": "image",
+            "file_type": "image",
+            "upload_to_comfy": true,
+            "copy_to_input": false,
+            "required": true
+        },
+        {
+            "param_name": "audio",
+            "file_type": "audio",
+            "upload_to_comfy": true,
+            "copy_to_input": false,
+            "required": true
+        }
+    ],
+    "node_updates": [
+        {
+            "node_id": "52",
+            "input_key": "image",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "58",
+            "input_key": "audio",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "6",
+            "input_key": "text", 
+            "map_key": "prompt",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "183",
+            "input_key": "frame_rate",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "246",
+            "input_key": "value",
+            "map_key": "frame_rate",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "183",
+            "input_key": "filename_prefix",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "93",
+            "input_key": "width",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "93",
+            "input_key": "height",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "202",
+            "input_key": "value",
+            "map_key": "width",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "203",
+            "input_key": "value",
+            "map_key": "height",
+            "value_source": "form_param"
+        }
+
+    ]
+}

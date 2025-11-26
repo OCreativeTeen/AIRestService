@@ -1,0 +1,66 @@
+{
+    "endpoint_path": "/wan/image2video_720",
+    "workflow_file": "workflow/Image2Video_720_api.json",
+    "description": "Convert image to video with text prompt",
+    "form_params": ["prompt", "negative_prompt", "filename_prefix", "image_width", "image_height", "cfg_scale", "steps", "seed", "motion_frame", "frame_rate", "num_frames"],
+    "file_configs": [
+        {
+            "param_name": "image",
+            "file_type": "image",
+            "upload_to_comfy": true,
+            "copy_to_input": false,
+            "required": true
+        }
+    ],
+    "node_updates": [
+        {
+            "node_id": "24",
+            "input_key": "image",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "25",
+            "input_key": "prompt",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "19",
+            "input_key": "value",
+            "map_key": "image_width",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "2",
+            "input_key": "shift",
+            "map_key": "motion_frame",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "3",
+            "input_key": "cfg",
+            "map_key": "cfg_scale",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "3",
+            "input_key": "steps",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "22",
+            "input_key": "frame_rate",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "22",
+            "input_key": "filename_prefix",
+            "value_source": "form_param"
+        },
+        { 
+            "node_id": "20",
+            "input_key": "value",
+            "map_key": "num_frames",
+            "value_source": "form_param"
+        }
+    ]
+}

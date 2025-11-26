@@ -1,0 +1,63 @@
+{
+    "endpoint_path": "/wan/image2video",
+    "workflow_file": "workflow/image2video_api.json",
+    "description": "Convert two images to video with transition",
+    "form_params": ["prompt", "negative_prompt", "filename_prefix", "image_width", "image_height", "cfg_scale", "steps", "seed", "motion_frame", "frame_rate", "num_frames"],
+    "file_configs": [
+        {
+            "param_name": "first_frame",
+            "file_type": "image",
+            "upload_to_comfy": true,
+            "copy_to_input": false,
+            "required": true
+        }
+    ],
+    "node_updates": [
+        {
+            "node_id": "9",
+            "input_key": "text",
+            "map_key": "prompt",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "10",
+            "input_key": "text",
+            "map_key": "negative_prompt",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "28",
+            "input_key": "width",
+            "map_key": "image_width",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "28",
+            "input_key": "height",
+            "map_key": "image_height",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "16",
+            "input_key": "image",
+            "map_key": "first_frame",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "40",
+            "input_key": "frame_rate",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "40",
+            "input_key": "filename_prefix",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "38",
+            "input_key": "value",
+            "map_key": "num_frames",
+            "value_source": "form_param"
+        }
+    ]
+}

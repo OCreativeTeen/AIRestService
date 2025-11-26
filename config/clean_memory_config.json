@@ -1,0 +1,10 @@
+{
+    "endpoint_path": "/clean_memory",
+    "workflow_file": "workflow/clean_memory_api.json",
+    "description": "Clean memory for other workflow running",
+    "form_params": [],
+    "file_configs": [
+    ],
+    "node_updates": [
+    ]
+}
