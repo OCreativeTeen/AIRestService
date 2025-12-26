@@ -194,6 +194,34 @@ async def run_actiontransfer_workflow(
 
 
 
+@app.post("/interpolate")
+async def run_interpolate_workflow(
+    video: UploadFile = File(...),
+    prompt: str = Form(...),
+    negative_prompt: str = Form(...),
+    filename_prefix: str = Form(...),
+    image_width: int = Form(...),
+    image_height: int = Form(...),    
+    cfg_scale: float = Form(...),
+    steps: int = Form(...),
+    seed: int = Form(...),
+    motion_frame: int = Form(...),
+    frame_rate: int = Form(...),
+    num_frames: int = Form(...)
+):
+    if "/interpolate" in workflow_configs:
+        config = workflow_configs["/interpolate"]
+        return await processor.execute_workflow(
+            config, 
+            { "prompt": prompt, "negative_prompt": negative_prompt,  "filename_prefix": filename_prefix,
+              "image_width": image_width, "image_height": image_height, 
+              "cfg_scale": cfg_scale, "steps": steps, "seed": seed, 
+              "motion_frame": motion_frame, "frame_rate": frame_rate, "num_frames": num_frames },
+            { "video": video }
+        )
+
+
+
 # Generic workflow endpoint
 @app.post("/{workflow_name}")
 async def execute_workflow_by_name(

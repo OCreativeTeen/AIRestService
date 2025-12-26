@@ -468,5 +468,33 @@
     "_meta": {
       "title": "🎈RAM-Cleanup"
     }
+  },
+  "209": {
+    "inputs": {
+      "image": [
+        "185",
+        0
+      ],
+      "align": true,
+      "size": 256
+    },
+    "class_type": "FaceCropper",
+    "_meta": {
+      "title": "Face Crop (added)"
+    }
+  },
+  "210": {
+    "inputs": {
+      "model_name": "WanFaceID.safetensors",
+      "image": [
+        "209",
+        0
+      ],
+      "device": "default"
+    },
+    "class_type": "WanFaceIDEncoder",
+    "_meta": {
+      "title": "Wan FaceID Encoder (added)"
+    }
   }
 }

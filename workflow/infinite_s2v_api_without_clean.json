@@ -392,7 +392,7 @@
   },
   "293": {
     "inputs": {
-      "preview": "",
+      "preview": "277",
       "source": [
         "194",
         2
@@ -401,36 +401,6 @@
     "class_type": "PreviewAny",
     "_meta": {
       "title": "Preview Any"
-    }
-  },
-  "294": {
-    "inputs": {
-      "offload_model": true,
-      "offload_cache": true,
-      "anything": [
-        "131",
-        0
-      ]
-    },
-    "class_type": "VRAMCleanup",
-    "_meta": {
-      "title": "🎈VRAM-Cleanup"
-    }
-  },
-  "295": {
-    "inputs": {
-      "clean_file_cache": true,
-      "clean_processes": true,
-      "clean_dlls": true,
-      "retry_times": 3,
-      "anything": [
-        "131",
-        0
-      ]
-    },
-    "class_type": "RAMCleanup",
-    "_meta": {
-      "title": "🎈RAM-Cleanup"
     }
   }
 }

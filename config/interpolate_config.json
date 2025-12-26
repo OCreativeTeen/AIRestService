@@ -1,0 +1,33 @@
+{
+    "endpoint_path": "/interpolate",
+    "workflow_file": "workflow/interpolate_api.json",
+    "description": "Intepolate video",
+    "form_params": ["prompt", "negative_prompt", "filename_prefix", "image_width", "image_height", "cfg_scale", "steps", "seed", "motion_frame", "frame_rate", "num_frames"],
+    "file_configs": [
+        {
+            "param_name": "video",
+            "file_type": "video",
+            "upload_to_comfy": true,
+            "copy_to_input": false,
+            "required": true
+        }
+    ],
+    "node_updates": [
+        {
+            "node_id": "10",
+            "input_key": "video",
+            "value_source": "uploaded_file_name"
+        },
+        {
+            "node_id": "16",
+            "input_key": "filename_prefix",
+            "value_source": "form_param"
+        },
+        {
+            "node_id": "18",
+            "input_key": "value",
+            "map_key": "frame_rate",
+            "value_source": "form_param"
+        }
+    ]
+}
