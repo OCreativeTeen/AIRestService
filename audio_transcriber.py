@@ -21,7 +21,7 @@ class AudioTranscriber:
             cpu_threads=4 if device == "cpu" else 1,
             num_workers=1
         )
-        print(f"✅ 模型加载成功 (device={device})")
+        print(f"[OK] 模型加载成功 (device={device})")
 
 
     def transcribe(self, audio_path, language) -> List[Dict[str, Any]]:
@@ -35,21 +35,12 @@ class AudioTranscriber:
         if lang == "zh-CN" or lang == "tw":
             lang = "zh"
 
-        if audio_path.endswith('.mp3'):
-            transcribe_file = audio_path.replace(".mp3", ".srt.json")        
-        elif audio_path.endswith('.wav'):
-            transcribe_file = audio_path.replace(".wav", ".srt.json")
-        else:
-            transcribe_file = audio_path + ".srt.json"
-        if os.path.exists(transcribe_file):
-            with open(transcribe_file, "r", encoding="utf-8") as f:
-                segments = json.load(f)
-            return segments
-
+        # 用 splitext 处理扩展名，兼容含中文、含多个点的文件名（如：xxx_《标题》.mp3）
+        root, _ = os.path.splitext(audio_path)
+        transcribe_file = root + ".srt.json"
         
-        model = None
         try:
-            print(f"📝 开始转录 (language={lang})...")
+            print(f"[INFO] 开始转录 (language={lang})...")
             
             # 使用低内存设置转录
             segments_gen, info = self.model.transcribe(
@@ -61,7 +52,7 @@ class AudioTranscriber:
                 condition_on_previous_text=False,
                 word_timestamps=False,  # 禁用词级时间戳，节省内存
             )
-            print(f"📝 音频信息: language={info.language}, duration={info.duration:.1f}s")
+            print(f"[INFO] 音频信息: language={info.language}, duration={info.duration:.1f}s")
             
             # 迭代生成器
             srt_segments = []
@@ -77,15 +68,60 @@ class AudioTranscriber:
                     'caption': seg.text
                 })
             
-            print(f"✅ 转录完成，共 {len(srt_segments)} 个片段")
+            print(f"[OK] 转录完成，共 {len(srt_segments)} 个片段")
+            srt_segments = self.merge_sentences(srt_segments, 3, 22)
             with open(transcribe_file, "w", encoding="utf-8") as f:
                 json.dump(srt_segments, f, ensure_ascii=False, indent=2)
-            return srt_segments
+            
+            return srt_segments, transcribe_file
             
         except Exception as e:
-            print(f"❌ 使用 失败: {type(e).__name__}: {e}")
+            print(f"[ERROR] 转录失败: {type(e).__name__}: {e}")
             
-        return []
+        return [], ""
+
+
+
+    def merge_sentences(self, input_segments, min_sentence_duration, max_sentence_duration):
+        print(f"[INFO] 合并句子...")
+        i = 0
+        while i < len(input_segments):
+            if i+1 < len(input_segments):
+                if input_segments[i]['end'] - input_segments[i]['start'] > max_sentence_duration:
+                    i += 1
+                    continue
+                if input_segments[i]['end'] - input_segments[i]['start'] < min_sentence_duration or input_segments[i+1]['end'] - input_segments[i+1]['start'] < min_sentence_duration:
+                    input_segments[i]['caption'] += input_segments[i+1]['caption']
+                    input_segments[i]['end'] = input_segments[i+1]['end']
+                    input_segments.pop(i+1)
+                    # 不递增 i，因为 result[i] 现在是合并后的元素，可能需要继续与下一个元素合并
+                else:
+                    i += 1
+            else:
+                i += 1
+
+        final_segments = []
+        for seg in input_segments:
+            final_segments.append({
+                "start": float(seg["start"]),
+                "end": float(seg["end"]),
+                "duration": float(seg["end"]) - float(seg["start"]),
+                "caption": seg["caption"]
+            })
+
+        if len(final_segments) > 0:
+            if final_segments[0]['start'] != 0.0:
+                final_segments[0]['start'] = 0.0
+
+            end_time = 0.0
+            for seg in final_segments:
+                if end_time > 0 and seg['start'] != end_time: # not the 1st item
+                    seg['start'] = end_time # fix start time (must == end of last item)
+                seg['duration'] = seg['end'] - seg['start']
+                end_time = seg['end']
+
+        print(f"[OK] 合并完成，共 {len(final_segments)} 个片段")
+        return final_segments
 
 
 if __name__ == "__main__":
@@ -94,9 +130,5 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--language", default="zh", help="语言代码 (默认: zh)")
     args = parser.parse_args()
     transcriber = AudioTranscriber("small", "cuda", "float16")
-    srt_segments = transcriber.transcribe(args.audio_path, args.language)
-    # save to srt file
-    with open(args.audio_path.replace(".mp3", ".srt").replace(".wav", ".srt"), "w", encoding="utf-8") as f:
-        for seg in srt_segments:
-            f.write(f"{seg['start']} --> {seg['end']}\n{seg['caption']}\n\n")
-    print(f"✅ 转录完成，共 {len(srt_segments)} 个片段")
+    srt_segments, srt_file = transcriber.transcribe(args.audio_path, args.language)
+    # save to srt file（与 transcribe 内一致：用 splitext 支持含中文等复杂文件名）

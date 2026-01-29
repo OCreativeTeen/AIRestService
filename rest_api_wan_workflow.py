@@ -242,9 +242,14 @@ async def transcribe_audio(
     ext = os.path.splitext(audio_file.filename or "audio.mp3")[1] or ".mp3"
     fd, temp_path = tempfile.mkstemp(suffix=ext, prefix="transcribe_", dir=script_dir)
     if temp_path.endswith(".mp3") or temp_path.endswith(".wav"):
-        srt_json_path = temp_path[:-4] + ".srt.json"
+        root, _ = os.path.splitext(temp_path)
+        srt_json_path = root + ".srt.json"
     else:
-        srt_json_path = temp_path + ".srt.json"
+        return JSONResponse(
+            content={"error": "Bad audio file", "stderr": proc.stderr or proc.stdout},
+            status_code=500,
+        )
+
     try:
         os.close(fd)
         with open(temp_path, "wb") as f:
@@ -267,9 +272,11 @@ async def transcribe_audio(
                 content={"error": "Transcriber did not produce output", "stderr": proc.stderr or ""},
                 status_code=500,
             )
+
         with open(srt_json_path, "r", encoding="utf-8") as f:
             srt_segments = json.load(f)
-        return {"srt_segments": srt_segments}
+        return srt_segments
+        
     finally:
         if os.path.exists(temp_path):
             try:
