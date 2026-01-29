@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import json
 import os
+import sys
+import subprocess
+import tempfile
 from typing import Dict, List
 from workflow_processor import WorkflowProcessor, WorkflowConfig
 
@@ -220,6 +223,64 @@ async def run_interpolate_workflow(
             { "video": video }
         )
 
+
+#
+# 只传音频（默认语言 zh）：
+# curl -X POST "http://localhost:9001/transcribe" -F "audio_file=@/path/to/your/audio.mp3"
+#
+# 指定语言（例如英文）：
+# curl -X POST "http://localhost:9001/transcribe" -F "audio_file=@/path/to/your/audio.mp3" -F "language=en"
+#
+# Window
+# curl -X POST "http://localhost:9001/transcribe" -F "audio_file=@E:/ComfyUI-Easy/AIRestService/11.mp3" -F "language=zh"
+@app.post("/transcribe")
+async def transcribe_audio(
+    audio_file: UploadFile = File(...),
+    language: str = Form("zh"),
+):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    ext = os.path.splitext(audio_file.filename or "audio.mp3")[1] or ".mp3"
+    fd, temp_path = tempfile.mkstemp(suffix=ext, prefix="transcribe_", dir=script_dir)
+    if temp_path.endswith(".mp3") or temp_path.endswith(".wav"):
+        srt_json_path = temp_path[:-4] + ".srt.json"
+    else:
+        srt_json_path = temp_path + ".srt.json"
+    try:
+        os.close(fd)
+        with open(temp_path, "wb") as f:
+            f.write(await audio_file.read())
+        proc = subprocess.run(
+            [sys.executable, os.path.join(script_dir, "audio_transcriber.py"), temp_path, "-l", language],
+            cwd=script_dir,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        if proc.returncode != 0:
+            return JSONResponse(
+                content={"error": "Transcription failed", "stderr": proc.stderr or proc.stdout},
+                status_code=500,
+            )
+        if not os.path.exists(srt_json_path):
+            return JSONResponse(
+                content={"error": "Transcriber did not produce output", "stderr": proc.stderr or ""},
+                status_code=500,
+            )
+        with open(srt_json_path, "r", encoding="utf-8") as f:
+            srt_segments = json.load(f)
+        return {"srt_segments": srt_segments}
+    finally:
+        if os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+        if os.path.exists(srt_json_path):
+            try:
+                os.unlink(srt_json_path)
+            except OSError:
+                pass
 
 
 # Generic workflow endpoint
