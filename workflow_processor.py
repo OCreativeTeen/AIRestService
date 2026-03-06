@@ -227,8 +227,26 @@ class WorkflowProcessor:
                 workflow_data, config.node_updates, form_data, processed_files
             )
             
+            # Build curl command showing how a client would call this API
+            base_url = "http://localhost:8000"  # change to your server if needed
+            client_url = f"{base_url}{config.endpoint_path}"
+            curl_parts = [f"curl -X POST \"{client_url}\""]
+            for k, v in form_data.items():
+                v_esc = str(v).replace("\\", "\\\\").replace('"', '\\"')
+                curl_parts.append(f'  -F "{k}={v_esc}"')
+            for param_name, filename in processed_files.items():
+                curl_parts.append(f'  -F "{param_name}=@{filename}"')
+            curl_client = " \\\n".join(curl_parts)
+            print("=== Curl (how client calls this API) ===")
+            print(curl_client)
+            print("=======================================")
+
+            # Print outgoing request to ComfyUI
+            request_body = {"prompt": workflow_data}
+            prep = requests.Request("POST", self.prompt_endpoint, json=request_body).prepare()
+            
             # Send to ComfyUI
-            response = requests.post(self.prompt_endpoint, json={"prompt": workflow_data})
+            response = requests.post(self.prompt_endpoint, json=request_body)
             response.raise_for_status()
             
             return JSONResponse(

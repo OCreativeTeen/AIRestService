@@ -144,16 +144,16 @@ async def run_sound2video_workflow(
     image: UploadFile = File(...),
     sound: UploadFile = File(...),
     prompt: str = Form(...),
-    negative_prompt: str = Form(...),
-    filename_prefix: str = Form(...),
-    image_width: int = Form(...),
-    image_height: int = Form(...),    
-    cfg_scale: float = Form(...),
-    steps: int = Form(...),
-    seed: int = Form(...),
-    motion_frame: int = Form(...),
-    frame_rate: int = Form(...),
-    num_frames: int = Form(...)
+    negative_prompt: str = Form(""),
+    filename_prefix: str = Form("infinite_s2v"),
+    image_width: int = Form(1024),
+    image_height: int = Form(576),
+    cfg_scale: float = Form(7.5),
+    steps: int = Form(20),
+    seed: int = Form(0),
+    motion_frame: int = Form(16),
+    frame_rate: int = Form(24),
+    num_frames: int = Form(121),
 ):
     """Legacy sound2video endpoint"""
     if "/wan/infinite_s2v" in workflow_configs:
@@ -262,11 +262,6 @@ async def transcribe_audio(
             encoding="utf-8",
             errors="replace",
         )
-        if proc.returncode != 0:
-            return JSONResponse(
-                content={"error": "Transcription failed", "stderr": proc.stderr or proc.stdout},
-                status_code=500,
-            )
         if not os.path.exists(srt_json_path):
             return JSONResponse(
                 content={"error": "Transcriber did not produce output", "stderr": proc.stderr or ""},
