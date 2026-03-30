@@ -233,10 +233,14 @@ async def run_interpolate_workflow(
 #
 # Window
 # curl -X POST "http://localhost:9001/transcribe" -F "audio_file=@E:/ComfyUI-Easy/AIRestService/11.mp3" -F "language=zh"
+# 可选：与 requests 一致 — files={'audio_file': f}, data={'language': lang, 'min_duration': ..., 'max_duration': ...}
+# curl ... -F "audio_file=@..." -F "language=zh" -F "min_duration=3" -F "max_duration=22"
 @app.post("/transcribe")
 async def transcribe_audio(
     audio_file: UploadFile = File(...),
     language: str = Form("zh"),
+    min_duration: float = Form(9.0),
+    max_duration: float = Form(22.0),
 ):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ext = os.path.splitext(audio_file.filename or "audio.mp3")[1] or ".mp3"
@@ -245,9 +249,18 @@ async def transcribe_audio(
         root, _ = os.path.splitext(temp_path)
         srt_json_path = root + ".srt.json"
     else:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        if os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
         return JSONResponse(
-            content={"error": "Bad audio file", "stderr": proc.stderr or proc.stdout},
-            status_code=500,
+            content={"error": "仅支持 .mp3 或 .wav 音频"},
+            status_code=400,
         )
 
     try:
@@ -255,7 +268,17 @@ async def transcribe_audio(
         with open(temp_path, "wb") as f:
             f.write(await audio_file.read())
         proc = subprocess.run(
-            [sys.executable, os.path.join(script_dir, "audio_transcriber.py"), temp_path, "-l", language],
+            [
+                sys.executable,
+                os.path.join(script_dir, "audio_transcriber.py"),
+                temp_path,
+                "-l",
+                language,
+                "--min-duration",
+                str(min_duration),
+                "--max-duration",
+                str(max_duration),
+            ],
             cwd=script_dir,
             capture_output=True,
             text=True,

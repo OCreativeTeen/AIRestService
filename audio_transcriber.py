@@ -24,7 +24,13 @@ class AudioTranscriber:
         print(f"[OK] 模型加载成功 (device={device})")
 
 
-    def transcribe(self, audio_path, language) -> List[Dict[str, Any]]:
+    def transcribe(
+        self,
+        audio_path,
+        language,
+        min_duration: float = 3.0,
+        max_duration: float = 22.0,
+    ) -> List[Dict[str, Any]]:
         """
         尝试使用 CUDA 转录，如果失败则回退到 CPU。
         包含详细的错误处理和内存清理。
@@ -69,7 +75,9 @@ class AudioTranscriber:
                 })
             
             print(f"[OK] 转录完成，共 {len(srt_segments)} 个片段")
-            srt_segments = self.merge_sentences(srt_segments, 3, 22)
+            srt_segments = self.merge_sentences(
+                srt_segments, min_duration, max_duration
+            )
             with open(transcribe_file, "w", encoding="utf-8") as f:
                 json.dump(srt_segments, f, ensure_ascii=False, indent=2)
             
@@ -128,7 +136,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="音频转文字 (Whisper)")
     parser.add_argument("audio_path", help="音频文件路径 (如 .mp3 / .wav)")
     parser.add_argument("-l", "--language", default="zh", help="语言代码 (默认: zh)")
+    parser.add_argument(
+        "--min-duration",
+        type=float,
+        default=9.0,
+        help="合并字幕片段时的最小时长（秒，默认 3）",
+    )
+    parser.add_argument(
+        "--max-duration",
+        type=float,
+        default=22.0,
+        help="合并字幕片段时的最大时长（秒，默认 22）",
+    )
     args = parser.parse_args()
     transcriber = AudioTranscriber("small", "cuda", "float16")
-    srt_segments, srt_file = transcriber.transcribe(args.audio_path, args.language)
+    srt_segments, srt_file = transcriber.transcribe(
+        args.audio_path,
+        args.language,
+        min_duration=args.min_duration,
+        max_duration=args.max_duration,
+    )
     # save to srt file（与 transcribe 内一致：用 splitext 支持含中文等复杂文件名）
